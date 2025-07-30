@@ -2,7 +2,13 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { Single_Day } from "next/font/google";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+
+// Define the Todo type
+interface Todo {
+  text: string;
+  completed: boolean;
+}
 
 const singleDay = Single_Day({
   weight: "400",
@@ -10,7 +16,7 @@ const singleDay = Single_Day({
 });
 
 export default function Home() {
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
 
   // Load todos from localStorage only on client
@@ -19,7 +25,9 @@ export default function Home() {
     if (saved) {
       try {
         setTodos(JSON.parse(saved));
-      } catch (e) {}
+      } catch (e) {
+        // Ignore JSON parse errors
+      }
     }
   }, []);
 
@@ -37,7 +45,7 @@ export default function Home() {
   };
 
   // Toggle completion
-  const toggleCompleted = (idx) => {
+  const toggleCompleted = (idx: number) => {
     setTodos(
       todos.map((todo, i) =>
         i === idx ? { ...todo, completed: !todo.completed } : todo
@@ -46,7 +54,7 @@ export default function Home() {
   };
 
   // Remove todo
-  const removeTodo = (idx) => {
+  const removeTodo = (idx: number) => {
     setTodos(todos.filter((_, i) => i !== idx));
   };
 
@@ -69,7 +77,7 @@ export default function Home() {
       </h1>
       <form
         className="flex gap-2 mb-12 w-full max-w-lg"
-        onSubmit={(e) => {
+        onSubmit={(e: FormEvent<HTMLFormElement>) => {
           e.preventDefault();
           addTodo();
         }}
@@ -82,7 +90,9 @@ export default function Home() {
             placeholder:text-gray-400
           "
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setInput(e.target.value)
+          }
           placeholder="Add your task..."
           aria-label="Add your task"
           autoComplete="off"
@@ -114,6 +124,14 @@ export default function Home() {
               onClick={() => toggleCompleted(idx)}
               title={todo.completed ? "Mark as not done" : "Mark as done"}
               aria-pressed={todo.completed}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleCompleted(idx);
+                }
+              }}
             >
               • {todo.text}
             </span>
@@ -124,7 +142,6 @@ export default function Home() {
               "
               onClick={() => removeTodo(idx)}
               aria-label={`Delete todo ${todo.text}`}
-              tabIndex={-1}
             >
               <Trash2 size={20} />
             </button>
