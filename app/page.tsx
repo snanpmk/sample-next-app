@@ -5,7 +5,6 @@ import { Single_Day } from "next/font/google";
 import { useState, useEffect } from "react";
 
 const singleDay = Single_Day({
-  subsets: ["latin"],
   weight: "400",
   display: "swap",
 });
