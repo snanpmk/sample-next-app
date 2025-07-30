@@ -1,40 +1,45 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { Single_Day } from "next/font/google";
-import { useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
+import { Trash2, Plus } from "lucide-react";
+import React, { useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 
-// Define the Todo type
 interface Todo {
   text: string;
   completed: boolean;
 }
 
-const singleDay = Single_Day({
-  weight: "400",
-  display: "swap",
-});
+interface ClientData {
+  clientInfo: {
+    fullName: string;
+    profilePicUrl: string;
+  };
+}
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
 
-  // Load todos from localStorage only on client
+  const [clientData, setClientData] = useState<ClientData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const saved = localStorage.getItem("todos");
-    if (saved) {
-      try {
-        setTodos(JSON.parse(saved));
-      } catch {}
-    }
+    setLoading(true);
+    fetch("https://synconnect.in/api/65c38aff2d671779e2b5b075")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch client data");
+        return res.json();
+      })
+      .then((data) => {
+        setClientData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
-  // Save todos to localStorage when changed
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
-
-  // Add a task
   const addTodo = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
@@ -42,7 +47,6 @@ export default function Home() {
     setInput("");
   };
 
-  // Toggle completion
   const toggleCompleted = (idx: number) => {
     setTodos(
       todos.map((todo, i) =>
@@ -51,12 +55,10 @@ export default function Home() {
     );
   };
 
-  // Remove todo
   const removeTodo = (idx: number) => {
     setTodos(todos.filter((_, i) => i !== idx));
   };
 
-  // Handle Enter key on input to add todo
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -66,95 +68,231 @@ export default function Home() {
 
   return (
     <main
-      className={
-        `
-        min-h-screen flex flex-col items-center py-12 px-4
-        sm:py-16 sm:px-6
-        md:px-12
-        bg-white
-        bg-[radial-gradient(#f3f4f6_1px,transparent_1px)] [background-size:20px_20px]
-        w-full
-        ` + singleDay.className
-      }
+      className="
+        min-h-screen flex flex-col items-center pt-8 pb-20 px-4
+        bg-gradient-to-br from-slate-900  to-slate-900
+        text-white relative overflow-hidden
+      "
     >
-      <h1
-        className="
-          text-4xl sm:text-5xl mb-8 sm:mb-10 font-handwritten text-gray-800 tracking-wider text-center
-        "
-        style={{ letterSpacing: "0.04em" }}
-      >
-        To-Do
-      </h1>
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl"></div>
+      </div>
 
-      <form
-        className="flex gap-2 mb-10 sm:mb-12 w-full max-w-md sm:max-w-lg"
-        onSubmit={(e) => e.preventDefault()} // prevent default here, adding only on enter key handler
-      >
-        <input
+      <div className="relative z-10 w-full max-w-2xl mx-auto space-y-8">
+        {/* Header Section */}
+        <header className="text-center space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              To-Do
+            </h1>
+            <p className="text-gray-300 text-lg">
+              Stay organized, stay productive
+            </p>
+          </div>
+
+          {/* Client Greeting */}
+          <div
+            className="
+              rounded-2xl p-6 
+              transition-all duration-300 
+            "
+          >
+            {loading && (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse"></div>
+                <p className="text-emerald-400 font-medium animate-pulse">
+                  Loading client info...
+                </p>
+              </div>
+            )}
+            {error && (
+              <p className="text-red-400 font-medium bg-red-500/10 px-4 py-2 rounded-lg border border-red-500/20">
+                {error}
+              </p>
+            )}
+            {clientData && (
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative">
+                  <img
+                    src={clientData.clientInfo.profilePicUrl}
+                    alt={`${clientData.clientInfo.fullName} profile`}
+                    className="
+                      rounded-full w-20 h-20 object-cover
+                      ring-4 ring-white/20 shadow-xl
+                    "
+                    loading="lazy"
+                  />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold text-white">
+                    Welcome back, {clientData.clientInfo.fullName}!
+                  </h2>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Ready to tackle your tasks?
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Input Section with Glassmorphism */}
+        <div
           className="
-            flex-1 py-3 px-4 rounded-lg border-0
-            bg-transparent font-handwritten text-lg sm:text-2xl tracking-wide
-            focus:outline-none
-            placeholder:text-gray-400
-          "
-          value={input}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setInput(e.target.value)
-          }
-          placeholder="Add your task and press Enter..."
-          aria-label="Add your task"
-          autoComplete="off"
-          onKeyDown={handleKeyDown}
-        />
-      </form>
+            rounded-2xl 
+            transition-all duration-300 "
+        >
+          <div className="flex space-x-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                className="
+                  w-full px-6 py-4 bg-white/10 backdrop-blur-md
+                  border border-white/20 rounded-xl
+                  text-white placeholder-gray-300
+                  text-lg font-medium
+                  focus:outline-none focus:ring-2 focus:ring-emerald-400/50
+                  focus:border-emerald-400/50 focus:bg-white/20
+                  transition-all duration-300
+                "
+                placeholder="What needs to be done?"
+                aria-label="Add your task"
+                autoComplete="off"
+                value={input}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setInput(e.target.value)
+                }
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
+        </div>
 
-      <ul className="w-full max-w-md sm:max-w-lg flex flex-col gap-6">
-        {todos.map((todo, idx) => (
-          <li key={idx} className="flex items-center group select-none">
-            <span
-              className={`
-                flex-1 cursor-pointer font-handwritten text-lg sm:text-2xl
-                transition
-                ${
-                  todo.completed
-                    ? "line-through text-[#b4b4b4] opacity-70"
-                    : "text-gray-700"
-                }
-              `}
-              onClick={() => toggleCompleted(idx)}
-              title={todo.completed ? "Mark as not done" : "Mark as done"}
-              aria-pressed={todo.completed}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleCompleted(idx);
-                }
-              }}
-            >
-              • {todo.text}
-            </span>
-            <button
-              className="
-                text-red-400 hover:text-red-700 ml-4 transition
-                opacity-0 group-hover:opacity-100
-                w-8 h-8 sm:w-9 sm:h-9
-                flex items-center justify-center
-              "
-              onClick={() => removeTodo(idx)}
-              aria-label={`Delete todo ${todo.text}`}
-            >
-              <Trash2 size={20} />
-            </button>
-          </li>
-        ))}
-        {todos.length === 0 && (
-          <li className="text-center text-gray-400 py-12 font-handwritten text-lg sm:text-xl">
-            Write your first task above!
-          </li>
-        )}
-      </ul>
+        {/* Todos Section */}
+        <div
+          className="
+            backdrop-blur-xl bg-white/5 border border-white/10
+            rounded-2xl p-6 shadow-2xl min-h-[400px]
+          "
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-white">Your Tasks</h3>
+            <div className="text-sm text-gray-300 bg-white/10 px-3 py-1 rounded-full">
+              {todos.filter((t) => !t.completed).length} of {todos.length}{" "}
+              remaining
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {todos.length === 0 ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
+                  <Plus size={24} className="text-gray-300" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-lg font-medium text-gray-300">
+                    No tasks yet
+                  </h4>
+                  <p className="text-gray-400">
+                    Add your first task above to get started!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              todos.map((todo, idx) => (
+                <div
+                  key={idx}
+                  className={`
+                    flex items-center justify-between
+                    backdrop-blur-md bg-white/5 border border-white/10
+                    rounded-xl p-4 group
+                    transition-all duration-300 ease-in-out
+                    hover:bg-white/10 hover:border-white/20 hover:scale-[1.02]
+                    ${todo.completed ? "opacity-60" : "hover:shadow-lg"}
+                    cursor-pointer
+                  `}
+                  onClick={() => toggleCompleted(idx)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleCompleted(idx);
+                    }
+                  }}
+                  title={todo.completed ? "Mark as not done" : "Mark as done"}
+                  aria-pressed={todo.completed}
+                >
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div
+                      className={`
+                      w-5 h-5 rounded-full border-2 transition-all duration-200
+                      ${
+                        todo.completed
+                          ? "bg-emerald-500 border-emerald-500"
+                          : "border-gray-400 group-hover:border-emerald-400"
+                      }
+                      flex items-center justify-center
+                    `}
+                    >
+                      {todo.completed && (
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span
+                      className={`
+                      font-medium text-lg transition-all duration-200
+                      ${
+                        todo.completed
+                          ? "line-through text-gray-400"
+                          : "text-white"
+                      }
+                    `}
+                    >
+                      {todo.text}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTodo(idx);
+                    }}
+                    aria-label={`Delete todo ${todo.text}`}
+                    className="
+                      p-2 rounded-lg backdrop-blur-sm
+                      bg-red-500/10 border border-red-500/20
+                      text-red-400 hover:text-red-300 hover:bg-red-500/20
+                      focus:outline-none focus:ring-2 focus:ring-red-500/50
+                      transition-all duration-200 ease-in-out
+                      transform hover:scale-110 active:scale-95
+                      opacity-0 group-hover:opacity-100
+                    "
+                    title="Delete task"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
