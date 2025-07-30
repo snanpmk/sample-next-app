@@ -1,8 +1,8 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Single_Day } from "next/font/google";
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 
 // Define the Todo type
 interface Todo {
@@ -25,9 +25,7 @@ export default function Home() {
     if (saved) {
       try {
         setTodos(JSON.parse(saved));
-      } catch (e) {
-        // Ignore JSON parse errors
-      }
+      } catch {}
     }
   }, []);
 
@@ -58,6 +56,14 @@ export default function Home() {
     setTodos(todos.filter((_, i) => i !== idx));
   };
 
+  // Handle Enter key on input to add todo
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTodo();
+    }
+  };
+
   return (
     <main
       className={
@@ -73,7 +79,7 @@ export default function Home() {
     >
       <h1
         className="
-          text-2xl sm:text-3xl mb-8 sm:mb-10 font-handwritten text-gray-800 tracking-wider text-center
+          text-4xl sm:text-5xl mb-8 sm:mb-10 font-handwritten text-gray-800 tracking-wider text-center
         "
         style={{ letterSpacing: "0.04em" }}
       >
@@ -82,15 +88,12 @@ export default function Home() {
 
       <form
         className="flex gap-2 mb-10 sm:mb-12 w-full max-w-md sm:max-w-lg"
-        onSubmit={(e: FormEvent<HTMLFormElement>) => {
-          e.preventDefault();
-          addTodo();
-        }}
+        onSubmit={(e) => e.preventDefault()} // prevent default here, adding only on enter key handler
       >
         <input
           className="
-            flex-1 py-2 px-3 rounded-lg border-0
-            bg-transparent font-handwritten text-base sm:text-xl tracking-wide
+            flex-1 py-3 px-4 rounded-lg border-0
+            bg-transparent font-handwritten text-lg sm:text-2xl tracking-wide
             focus:outline-none
             placeholder:text-gray-400
           "
@@ -98,36 +101,24 @@ export default function Home() {
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setInput(e.target.value)
           }
-          placeholder="Add your task..."
+          placeholder="Add your task and press Enter..."
           aria-label="Add your task"
           autoComplete="off"
+          onKeyDown={handleKeyDown}
         />
-        <button
-          className="
-            bg-gray-800 text-white p-2 rounded-full
-            hover:bg-gray-700 transition
-            flex items-center justify-center
-            w-10 h-10
-            sm:w-12 sm:h-12
-          "
-          type="submit"
-          aria-label="Add todo"
-        >
-          <Plus size={22} strokeWidth={3} />
-        </button>
       </form>
 
-      <ul className="w-full max-w-md sm:max-w-lg flex flex-col gap-4">
+      <ul className="w-full max-w-md sm:max-w-lg flex flex-col gap-6">
         {todos.map((todo, idx) => (
           <li key={idx} className="flex items-center group select-none">
             <span
               className={`
-                flex-1 cursor-pointer font-handwritten text-base sm:text-xl
+                flex-1 cursor-pointer font-handwritten text-lg sm:text-2xl
                 transition
                 ${
                   todo.completed
                     ? "line-through text-[#b4b4b4] opacity-70"
-                    : "text-gray-500"
+                    : "text-gray-700"
                 }
               `}
               onClick={() => toggleCompleted(idx)}
@@ -146,20 +137,20 @@ export default function Home() {
             </span>
             <button
               className="
-                text-red-300 hover:text-red-600 ml-3 transition
+                text-red-400 hover:text-red-700 ml-4 transition
                 opacity-0 group-hover:opacity-100
-                w-7 h-7 sm:w-8 sm:h-8
+                w-8 h-8 sm:w-9 sm:h-9
                 flex items-center justify-center
               "
               onClick={() => removeTodo(idx)}
               aria-label={`Delete todo ${todo.text}`}
             >
-              <Trash2 size={18} />
+              <Trash2 size={20} />
             </button>
           </li>
         ))}
         {todos.length === 0 && (
-          <li className="text-center text-gray-400 py-8 font-handwritten text-base sm:text-lg">
+          <li className="text-center text-gray-400 py-12 font-handwritten text-lg sm:text-xl">
             Write your first task above!
           </li>
         )}
